@@ -5,7 +5,9 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const ai = new GoogleGenAI({ 
+  apiKey: (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || '' 
+});
 
 export const summarizeText = async (text: string) => {
   if (!text) return "";
@@ -21,6 +23,9 @@ export const summarizeText = async (text: string) => {
 
     return response.text || "Failed to generate summary.";
   } catch (error) {
+    if (error instanceof Error && error.message.includes('API_KEY_INVALID')) {
+      return "Invalid API Key. Please check your AI Studio secrets.";
+    }
     console.error("Summarization error:", error);
     return "Error occurred during summarization.";
   }
