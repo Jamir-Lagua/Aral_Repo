@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Helpers
+    function isValidTask(data) {
+      return data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 500 &&
+             data.createdAt is number;
+    }
+
+    function isValidNote(data) {
+      return data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 500;
+    }
+
+    function isValidSession(data) {
+      return data.userId == request.auth.uid &&
+             data.duration is number;
+    }
+
+    // 1. Tasks
+    match /tasks/{taskId} {
+      // allow list: explicitly check resource.data to prevent scrape
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isValidTask(incoming());
+      allow update: if isOwner(existing().userId) && isValidTask(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'title', 'description', 'dueDate', 'category'])
+      );
+    }
+
+    // 2. Notes
+    match /notes/{noteId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isValidNote(incoming());
+      allow update: if isOwner(existing().userId) && isValidNote(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'summary', 'updatedAt'])
+      );
+    }
+
+    // 3. Study Sessions
+    match /studySessions/{sessionId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isValidSession(incoming());
+    }
+  }
+}

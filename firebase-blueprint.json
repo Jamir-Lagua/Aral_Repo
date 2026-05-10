@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "A study task or milestone",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "category": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "userId", "createdAt"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "User notes and study materials",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "summary": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["title", "userId", "createdAt", "updatedAt"]
+    },
+    "StudySession": {
+      "title": "Study Session",
+      "description": "A focus session recorded by the timer",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "duration": { "type": "number" },
+        "timestamp": { "type": "object" },
+        "type": { "type": "string" }
+      },
+      "required": ["userId", "duration"]
+    }
+  },
+  "firestore": {
+    "tasks": {
+      "schema": "Task",
+      "description": "Collection of tasks"
+    },
+    "notes": {
+      "schema": "Note",
+      "description": "Collection of notes"
+    },
+    "studySessions": {
+      "schema": "StudySession",
+      "description": "Collection of study sessions"
+    }
+  }
+}
